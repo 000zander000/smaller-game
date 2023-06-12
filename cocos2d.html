@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arknights</title>
+</head>
+<style>
+    /* .d1{ */
+        /* background-color:black;  */
+         /* width: 10px;  */
+        /* height: 10px;  */
+    /* } */
+</style>
+<body>
+    <div class="d1" onclick="aaa()">
+
+    </div>
+    <canvas id="gameCanvas" width="1529" height="860" style="border: 1px black solid;">
+        
+    </canvas>
+    <audio controls>
+        <source src="./background music.mp3" type="audio/mpeg">
+      </audio>
+    <script src="./d1.js">
+
+    </script>
+<script src="./cocos2d-js-v3.13.js">
+  
+</script>
+<script>
+   var webSocket=new WebSocket("ws://192.168.16.25:8080/zbj webSocketServer")
+   
+   var type=prompt("选择你的角色,1.克里斯藤,2.行星碎屑")
+   console.log(type);
+
+   var spriteX={
+    person:60,
+    ball1:200
+   }
+    
+   cc.onStart=function() {
+        console.log("game start");
+    }
+    cc.game.run("gameCanvas");
+    var text="the tall building in the distance, with its huge glass exterior wall filled with clouds, was unusually clear, like a leaf filled with dewdrops. just a leaf indeed. farther away, the tall building soon disappeared into countless skyscrapers, and special buildings such as science and technology exhibition halls and expo halls were scattered among them, like colonies in the forest. it's just that, looking up, the sky is too vast, and the whole trimont is just a thin leaf."
+    
+    console.log(cc.KEY["t"]);
+    var textCode=[]
+    for (var a = 0; a < text.length; a++) {
+        textCode.push(cc.KEY[text[a]])
+    }
+    for (let index = 0; index < textCode.length; index++) {
+      if (typeof(textCode[index])=="undefined") {
+        textCode[index]=32;
+      }
+      console.log(textCode)
+    }
+    
+
+
+
+    
+     var ballSprite =cc.Sprite.extend({
+     ctor:function () {
+         this._super("ball.png")
+         this.setPosition(200,395)
+         this.scheduleUpdate();
+
+    
+},
+    update:function (dt) {
+
+ this.rotation+=180*dt
+// var x= this.getPositionX()
+// x += 13*dt
+// var x=this.setPositionX(x)
+
+    }
+})
+    var ball1= new ballSprite() 
+    
+    var person=new cc.Sprite("./person.png")
+    person.setPosition(60,420)
+
+    var line=new cc.DrawNode()
+    line.drawSegment(cc.p(0,360),cc.p(1600,360),2,cc.color(238,232,170))
+    
+    var richText = new ccui.RichText();
+    richText.setContentSize(cc.size(1000,400))
+    richText.ignoreContentAdaptWithSize()
+    richText.setPosition(865,140)
+    for (var i = 0; i < text.length; i++) {
+        var textElement=new ccui.RichElementText(i,cc.color(135,206,250),255,text[i],'微软雅黑',25)
+        richText.pushBackElement(textElement);
+    }
+    
+
+
+    var myScene=cc.Scene.extend({
+    onEnter:function () {
+        this._super()
+    console.log("场景Loading");
+    // cc.audioEngine.playMusic("./background music.mp3", true);
+    
+    var BackgroundLayer=cc.Layer.extend({
+        ctor:function () {
+            this._super();
+            var size=cc.winSize;
+            var bgSprite=new cc.Sprite("./background.png");
+            bgSprite.attr({
+                x: size.width/2,
+                y: size.height/2
+            });
+            this.addChild(bgSprite);
+            return true;
+        }
+    });
+    var layer=new BackgroundLayer();
+    this.addChild(layer)
+    this.addChild(ball1)
+    this.addChild(person)
+    this.addChild(line)
+    this.addChild(richText)
+    
+
+    var palyIndex=0
+    cc.eventManager.addListener({
+        event:cc.EventListener.KEYBOARD,
+        onKeyPressed:function(keyCode,event){
+        console.log(keyCode);
+        if (keyCode==textCode[palyIndex]) {
+        richText.removeElement(palyIndex)
+        var NewElement=new ccui.RichElementText(palyIndex,cc.color(207,181,59),255,text[palyIndex],'微软雅黑',25)
+        richText.insertElement(NewElement,palyIndex)
+        richText.formatText() 
+        palyIndex++;
+        // var personX= person.getPositionX()
+        // personX += 12
+        // person.setPositionX(personX)
+        //    if (type==1) {
+            // spriteX.person+=10;
+        //    }else{
+            // spriteX.ball1+=10;
+        //    }  
+        // webSocket.send(JSON.stringify(spriteX))
+        webSocket.send(type.toString())
+        
+        }
+        
+        }
+    },this)
+    webSocket.onmessage=function(event){
+        console.log(event.data);
+        var data=JSON.parse(event.data)
+        console.log(data)
+        spriteX.person=data.person
+        spriteX.ball1=data.ball1
+        person.setPositionX(spriteX.person)
+        ball1.setPositionX(spriteX.ball1)
+        if (spriteX.person+70==spriteX.ball1) {
+        alert("game over")
+    }else if (spriteX.ball1=1600||spriteX.ball1-spriteX.person>=400) {
+        alert("game over")
+    }
+        }}
+    }
+     ,webSocket.onclose=function(event){
+      person=60;
+      ball1=200;
+}
+    )
+    
+     
+    cc.director.runScene(new myScene());
+    
+</script>
+</body>
+</html>
